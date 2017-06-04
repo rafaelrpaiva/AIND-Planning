@@ -4,309 +4,247 @@ output:
   pdf_document: default
 ---
 
-# Artificial Intelligence Nanodegree Project - Build a Game-playing Agent
+# Artificial Intelligence Nanodegree Project - Project 3: Air Cargo Planning Analysis
 
-## Deliver
+## Summary
 
-In this project, our mission was to develop an adversarial search agent to play the game "Isolation". This project uses 
-a version of Isolation where each agent is restricted to L-shaped movements (like a knight in chess) on a rectangular 
-grid (like a chess or checkerboard).
-Part 1 of deliver is to modify code in the `game_agent.py`
+This article presents an analysis through several planning search implementations to solve the Air Cargo Transport 
+System, a project in Artifical Intelligence Nanodegree performed by Udacity.
 
-Additionally, agents will have a fixed time limit each turn to search for the best move and respond.  
-If the time limit expires during a player's turn, that player forfeits the match, and the opponent wins.
+For more details about the project and source code, 
+please visit <https://github.com/rafaelrpaiva/AIND-Planning>
 
-These rules are implemented in the `isolation.Board` class provided in the repository. 
+## Optimal Plans for Given Problems
 
-## Steps
-
-To perform the right game, the process was to implement the four functions in `game_agent.py`:
-- `CustomPlayer.minimax()`: implement _minimax_ search
-- `CustomPlayer.alphabeta()`: implement _minimax_ search with alpha-beta pruning
-- `CustomPlayer.get_move()`: implement fixed-depth and iterative deepening search
-- `custom_score()`: implement a evaluation heuristic
-
-### Analysis
-
-The first evaluation was to guarantee that the code is rightly implemented. Using `python agent_test.py -v` we ran and 
-obtained the following result:
+The project presents 3 planning problems in the Air Cargo domain that use the same **action schema**:
 
 ```
-test_alphabeta (__main__.Project1Test)
-Test CustomPlayer.alphabeta ... ok
-test_alphabeta_interface (__main__.Project1Test)
-Test CustomPlayer.alphabeta interface with simple input ... ok
-test_get_move (__main__.Project1Test)
-Test iterative deepening in CustomPlayer.get_move by placing an ... ok
-test_get_move_interface (__main__.Project1Test)
-Test CustomPlayer.get_move interface with simple input ... ok
-test_heuristic (__main__.Project1Test)
-Test output interface of heuristic score function interface. ... ok
-test_minimax (__main__.Project1Test)
-Test CustomPlayer.minimax ... ok
-test_minimax_interface (__main__.Project1Test)
-Test CustomPlayer.minimax interface with simple input ... ok
-
-----------------------------------------------------------------------
-Ran 7 tests in 8.509s
-
-OK
+Action(Load(c, p, a),
+	PRECOND: At(c, a) ^ At(p, a) ^ Cargo(c) ^ Plane(p) ^ Airport(a)
+	EFFECT: ¬ At(c, a) ^ In(c, p))
+Action(Unload(c, p, a),
+	PRECOND: In(c, p) ^ At(p, a) ^ Cargo(c) ^ Plane(p) ^ Airport(a)
+	EFFECT: At(c, a) ^ ¬ In(c, p))
+Action(Fly(p, from, to),
+	PRECOND: At(p, from) ^ Plane(p) ^ Airport(from) ^ Airport(to)
+	EFFECT: ¬ At(p, from) ^ At(p, to))
 ```
 
-### Tournament
+### Problem 1
 
-The `tournament.py` script is used to evaluate the effectiveness for the custom_score heuristics.  This script measures 
-relative performance of the agent developed (called "Student") in a round-robin tournament against several other 
-pre-defined agents.  The Student agent uses time-limited Iterative Deepening and the custom_score heuristic you wrote.
-
-The performance of time-limited iterative deepening search is hardware dependent. These tests were executed in a 
-Intel i7 2.4GHz with 16GB of RAM.
-
-To measure the performance, there is also an agent called "ID_Improved" that uses Iterative Deepening and the 
-improved_score heuristic from `sample_players.py`.  For the tournament, our agent has to outperform ID_Improved.
-
-The tournament opponents are listed below.
-- Random: An agent that randomly chooses a move each turn.
-- MM_Null: CustomPlayer agent using fixed-depth minimax search and the null_score heuristic
-- MM_Open: CustomPlayer agent using fixed-depth minimax search and the open_move_score heuristic
-- MM_Improved: CustomPlayer agent using fixed-depth minimax search and the improved_score heuristic
-- AB_Null: CustomPlayer agent using fixed-depth alpha-beta search and the null_score heuristic
-- AB_Open: CustomPlayer agent using fixed-depth alpha-beta search and the open_move_score heuristic
-- AB_Improved: CustomPlayer agent using fixed-depth alpha-beta search and the improved_score heuristic
-
-
-## Heuristics Developed
-
-To execute the game, 4 heuristics were developed and tested in `tournament.py` and they will be presented below.
-
-#### Heuristic 1: Difference of Moves
-The first one, called `difference_of_moves` is similar to the improved_score heuristic presented during the course 
-and used by `ID_Improved`, except that it uses a more aggressive approach since it punishes the adversarial movement by 
-a multiplier factor. Some factors were tested and the best value, in an empirical analysis, was used here (2.0).
-
-Running the `tournament.py` we obtained the following result:
-
+Problem 1 works with two cargoes (C1, C2), two planes (P1, P2) and two airports (SFO, JFK). 
+The initial state and goal are presented below:
 ```
-*************************
- Evaluating: ID_Improved 
-*************************
-
-Playing Matches:
-----------
-C:/Rafael/Estudos&Linguas/MOOC - Udacity/003-Nanodegree Artificial Intelligence/python/AIND-Isolation/tournament.py:100: UserWarning: One or more agents lost a match this round due to timeout. The get_move() function must return before time_left() reaches 0 ms. You will need to leave some time for the function to return, and may need to increase this margin to avoid timeouts during  tournament play.
-  warnings.warn(TIMEOUT_WARNING)
-  Match 1: ID_Improved vs   Random    	Result: 18 to 2
-  Match 2: ID_Improved vs   MM_Null   	Result: 17 to 3
-  Match 3: ID_Improved vs   MM_Open   	Result: 14 to 6
-  Match 4: ID_Improved vs MM_Improved 	Result: 16 to 4
-  Match 5: ID_Improved vs   AB_Null   	Result: 13 to 7
-  Match 6: ID_Improved vs   AB_Open   	Result: 11 to 9
-  Match 7: ID_Improved vs AB_Improved 	Result: 12 to 8
-
-
-Results:
-----------
-ID_Improved         72.14%
-
-*************************
-   Evaluating: Student   
-*************************
-
-Playing Matches:
-----------
-  Match 1:   Student   vs   Random    	Result: 18 to 2
-  Match 2:   Student   vs   MM_Null   	Result: 15 to 5
-  Match 3:   Student   vs   MM_Open   	Result: 14 to 6
-  Match 4:   Student   vs MM_Improved 	Result: 10 to 10
-  Match 5:   Student   vs   AB_Null   	Result: 15 to 5
-  Match 6:   Student   vs   AB_Open   	Result: 11 to 9
-  Match 7:   Student   vs AB_Improved 	Result: 17 to 3
-
-
-Results:
-----------
-Student             71.43%
+Init(At(C1, SFO) ^ At(C2, JFK)
+	^ At(P1, SFO) ^ At(P2, JFK)
+	^ Cargo(C1) ^ Cargo(C2)
+	^ Plane(P1) ^ Plane(P2)
+	^ Airport(JFK) ^ Airport(SFO))
+Goal(At(C1, JFK) ^ At(C2, SFO))
 ```
 
-#### Heuristic 2: Final Countdown
-The second heuristic gives a different treatment as long as the game is developed. It starts with some aggressiveness 
-factor and, in the final third of the game, becomes more aggressive, enforcing when a move gives a bad score to the 
-adversarial.
-
-This heuristic performed that way:
-```
-*************************
- Evaluating: ID_Improved 
-*************************
-
-Playing Matches:
-----------
-  Match 1: ID_Improved vs   Random    	Result: 18 to 2
-  Match 2: ID_Improved vs   MM_Null   	Result: 16 to 4
-  Match 3: ID_Improved vs   MM_Open   	Result: 10 to 10
-  Match 4: ID_Improved vs MM_Improved 	Result: 13 to 7
-  Match 5: ID_Improved vs   AB_Null   	Result: 14 to 6
-  Match 6: ID_Improved vs   AB_Open   	Result: 10 to 10
-  Match 7: ID_Improved vs AB_Improved 	Result: 18 to 2
-
-
-Results:
-----------
-ID_Improved         70.71%
-
-*************************
-   Evaluating: Student   
-*************************
-
-Playing Matches:
-----------
-  Match 1:   Student   vs   Random    	Result: 19 to 1
-  Match 2:   Student   vs   MM_Null   	Result: 15 to 5
-  Match 3:   Student   vs   MM_Open   	Result: 14 to 6
-  Match 4:   Student   vs MM_Improved 	Result: 13 to 7
-  Match 5:   Student   vs   AB_Null   	Result: 14 to 6
-  Match 6:   Student   vs   AB_Open   	Result: 13 to 7
-  Match 7:   Student   vs AB_Improved 	Result: 14 to 6
-
-
-Results:
-----------
-Student             72.86%
-```
-
-#### Heuristic 3: Run from Adversary
-The third heuristic thinks of the game dynamics and tries to keep far from the adversary move. For that, it uses 
-the distance between the pieces as the absolute value in both x and y measures. This is typically a defensive approach.
-
-Then, the goal is to use the sum of current distances as evaluation function.
-
-This heuristic presented the following result:
+This problem is solved with an optimal plan of **6 actions**. One of the many options is presented below:
 
 ```
-*************************
- Evaluating: ID_Improved 
-*************************
-
-Playing Matches:
-----------
-C:/Rafael/Estudos&Linguas/MOOC - Udacity/003-Nanodegree Artificial Intelligence/python/AIND-Isolation/tournament.py:100: UserWarning: One or more agents lost a match this round due to timeout. The get_move() function must return before time_left() reaches 0 ms. You will need to leave some time for the function to return, and may need to increase this margin to avoid timeouts during  tournament play.
-  warnings.warn(TIMEOUT_WARNING)
-  Match 1: ID_Improved vs   Random    	Result: 16 to 4
-  Match 2: ID_Improved vs   MM_Null   	Result: 13 to 7
-  Match 3: ID_Improved vs   MM_Open   	Result: 13 to 7
-  Match 4: ID_Improved vs MM_Improved 	Result: 14 to 6
-  Match 5: ID_Improved vs   AB_Null   	Result: 11 to 9
-  Match 6: ID_Improved vs   AB_Open   	Result: 11 to 9
-  Match 7: ID_Improved vs AB_Improved 	Result: 14 to 6
-
-
-Results:
-----------
-ID_Improved         65.71%
-
-*************************
-   Evaluating: Student   
-*************************
-
-Playing Matches:
-----------
-  Match 1:   Student   vs   Random    	Result: 18 to 2
-  Match 2:   Student   vs   MM_Null   	Result: 15 to 5
-  Match 3:   Student   vs   MM_Open   	Result: 15 to 5
-  Match 4:   Student   vs MM_Improved 	Result: 12 to 8
-  Match 5:   Student   vs   AB_Null   	Result: 13 to 7
-  Match 6:   Student   vs   AB_Open   	Result: 12 to 8
-  Match 7:   Student   vs AB_Improved 	Result: 12 to 8
-
-
-Results:
-----------
-Student             69.29%
+Load(C1, P1, SFO)
+Load(C2, P2, JFK)
+Fly(P1, SFO, JFK)
+Fly(P2, JFK, SFO)
+Unload(C1, P1, JFK)
+Unload(C2, P2, SFO)
 ```
 
-## Heuristic Analysis
+### Problem 2
 
-Here we have the preliminary results from the heuristics:
-
-| Heuristic             | ID_Improved | Student |
-|    :-:                |     :-:     |   :-:   |
-|H1: Difference of Moves|**72.14%**|  71.43%  |
-|H2: Final Countdown    |  70.71%  |**72.86%**|
-|H3: Run from Adversary |  65.71%  |**69.29%**|
-
-Looking for the results, acting defensively in the beginning and being more aggressive in the end (heuristic 2) is the 
-best approach for these ones? It seems one only evaluation doesn't provide enough information to a fair analysis, since 
-some causality could happen. To avoid that, I implemented a variation of tournament program, which runs a match in a 
-5-set battle (as usually in games like tennis, volley etc), presenting the winner in the end.
-
-Besides, analysing the results primarily, a small modification was introduced in heuristics, to see if privileging the 
-center will give some advantage in the evaluation function, which was mentioned during the classes. This modification
-follows the code below:
-
+Problem 2 works with three cargoes (C1, C2, C3), three planes (P1, P2, P3) and three airports (SFO, JFK, ATL).
+The initial state and goal are presented below:
 ```
-    directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
-
-    off_center = [(r + dr, c + dc) for dr, dc in directions
-                  if 0 <= r + dr < game.height and 0 <= c + dc < game.width]
-    player_location = game.get_player_location(player)
-    if player_location == center:
-        bonus = 1.5
-    elif player_location in off_center:
-            bonus = 0.5
+Init(At(C1, SFO) ^ At(C2, JFK) ^ At(C3, ATL)
+	^ At(P1, SFO) ^ At(P2, JFK) ^ At(P3, ATL)
+	^ Cargo(C1) ^ Cargo(C2) ^ Cargo(C3)
+	^ Plane(P1) ^ Plane(P2) ^ Plane(P3)
+	^ Airport(JFK) ^ Airport(SFO) ^ Airport(ATL))
+Goal(At(C1, JFK) ^ At(C2, SFO) ^ At(C3, SFO))
 ```
 
-The following table presents the result from the heuristics:
+This problem is solved with an optimal plan of **9 actions**. There are some different configurations to 
+solve the problem, and one of the many options is presented below:
+```
+Load(C1, P1, SFO)
+Load(C2, P2, JFK)
+Load(C3, P3, ATL)
+Fly(P1, SFO, JFK)
+Fly(P2, JFK, SFO)
+Fly(P3, ATL, SFO)
+Unload(C3, P3, SFO)
+Unload(C1, P1, JFK)
+Unload(C2, P2, SFO)
+```
 
-| Heuristic             | Match Result | ID_Improved  Avg | Student Avg |
-|    :-:                |     :-:      |         :-:      |      :-:    |
-|H1: Difference of Moves|  3 - 2 WON   |     74.42%       |    73.42%   |
-|H1: Difference of Moves + center| 3 - 2 WON |  67.43%    |    70.14%   |
-|H2: Final Countdown    |  2 - 3 LOSE  |     69.57%       |    68.86%   |
-|H2: Final Countdown + center | 3 - 2 WIN |  68.57%       |    70.43%   |
-|H3: Run from Adversary |  1 - 4 LOSE  |     66.85%       |    69.71%   |
+### Problem 3
 
-As we can see, the results present the heuristic "Difference of Moves" adopting the aggressiveness factor of 2.0. 
-This more aggressive approach, indeed, presented better results against "improved score" executed by the ID_Improved 
-although the factor of 2.0 resulted in a victory of 3 to 2. Keeping more aggressive and bonifying the central position, 
-as implemented in the heuristics named "privilege center" and "final countdown with center", presented the best results 
-in general. In both cases, the results couldn't allow which one was better, since the scores (3-2) and the averages 
-(70.14% and 70.43%) were very close.
+Finally, Problem 3 works with four cargoes (C1, C2, C3, C4), four planes (P1, P2, P3, P4) and four airports 
+(SFO, JFK, ATL, ORD). The initial state and goal are presented below:
+```
+Init(At(C1, SFO) ^ At(C2, JFK) ^ At(C3, ATL) ^ At(C4, ORD)
+	^ At(P1, SFO) ^ At(P2, JFK)
+	^ Cargo(C1) ^ Cargo(C2) ^ Cargo(C3) ^ Cargo(C4)
+	^ Plane(P1) ^ Plane(P2)
+	^ Airport(JFK) ^ Airport(SFO) ^ Airport(ATL) ^ Airport(ORD))
+Goal(At(C1, JFK) ^ At(C3, JFK) ^ At(C2, SFO) ^ At(C4, SFO))
+```
 
-## Heuristic Chosen
+This problem is solved with an optimal plan of **12 actions**. There are some different configurations to 
+solve the problem, and one of the many options is presented below:
+```
+Load(C1, P1, SFO)
+Load(C2, P2, JFK)
+Fly(P1, SFO, ATL)
+Load(C3, P1, ATL)
+Fly(P2, JFK, ORD)
+Load(C4, P2, ORD)
+Fly(P2, ORD, SFO)
+Fly(P1, ATL, JFK)
+Unload(C4, P2, SFO)
+Unload(C3, P1, JFK)
+Unload(C1, P1, JFK)
+Unload(C2, P2, SFO)
+```
 
-As defined in the project submission, the chosen heuristic was the more aggressive one, privileging the center (in the 
-code, named `"privilege_center"`). The reasons for choosing that are presented below:
+## Analysis of Non-Heuristics Search
 
-1. The numbers were consistently one of the bests in the heuristics. This heuristic defeated ID_Improved in several 
-simulations. Despite the difference between the heuristics can't be statistically proven (in the table above, the same 
-heuristic without ), the data presented good results for both `"privilege_center"` and `"final_countdown_with_center"`.
+The first block of problem, using uninformed search algorithms, since they don't work with additional information 
+about the states. The algorithms used were:
+- `1. breadth_first_search`
+- `3. depth_first_graph_search`
+- `5. uniform_cost_search`
+- `7. greedy_best_first_graph_search h_1`
 
-2. Since the results were very similar between both heuristics (as a matter of fact, the difference of both is just a 
-tuning moment to using a more aggressive factor), the second criteria to decide was performance. Since 
-`"privilege_center"` was a little bit simpler than the second heuristic, in a 5-set battle it performed faster, probably
-because it didn't need to run a if/else command to choose the aggressiveness factor, nor analysing the number of blank
-spaces for that. The table below presented the time which each heuristic ran, using the same computer hardware and 
-same environment (e.g. memory available during the execution):
+To compare the results between these algorithms, we used the outputs created by `run_search.py` execution, which 
+reports execution time (in seconds), memory usage (in terms of nodes) and the path length:
 
-| Heuristic             |  Match Duration (in minutes)|
-|    :-:                |              :-:            |
-|H1: Difference of Moves + center|   43.04388556083   |
-|H2: Final Countdown + center |      59.21595096588   |
-** The final performance presented more than 15 minutes of difference - although is hard to compare the exact environment
-between these two executions, similar environments provided showed that this difference is significant to keep simpler
-and choosing `"privilege_center"` - in a TV-event, you can use this difference of time to show nice advertisements. :)
+#### Problem 1
 
-3. Finally, adding points in the evaluation function (adopted in both cases) if the move is next to the center tries to 
-keep our player in the central position, which gives better options to move. As we approach the corners, the L-movements 
-become more limited, and that is generally the reason to try keeping our moves in the center.
+|    Search Algorithm          | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                  |     :-:     |        :-:         |       :-:       |
+|(1) Breadth First Search      |    **6**    |      0.03436s      |       43        |
+|(3) Depth First Graph Search  |     12      |      0.00917s      |       12        |
+|(5) Uniform Cost Search       |    **6**    |      0.04061s      |       55        |
+|(7) Greedy Best First Search  |    **6**    |    **0.00589s**    |     **7**       |
+
+#### Problem 2
+
+|    Search Algorithm          | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                  |     :-:     |        :-:         |       :-:       |
+|(1) Breadth First Search      |    **9**    |     19.71453s      |      3343       |
+|(3) Depth First Graph Search  |     575     |      4.73562s      |     **582**     |
+|(5) Uniform Cost Search       |    **9**    |     18.37634s      |      4852       |
+|(7) Greedy Best First Search  |     17      |    **3.59012s**    |       990       |
+
+#### Problem 3
+
+|    Search Algorithm          | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                  |     :-:     |        :-:         |       :-:       |
+|(1) Breadth First Search      |   **12**    |    157.00695s      |     14663       |
+|(3) Depth First Graph Search  |     596     |    **5.95305s**    |    **627**      |
+|(5) Uniform Cost Search       |   **12**    |     83.44421s      |     18235       |
+|(7) Greedy Best First Search  |     22      |     23.61275s      |      5614       |
+
+### Analysis of Uninformed Search Algorithms
+
+Analysing the results from the three problems presented, we can say that **Breadth First Search** and 
+**Uniform Cost Search** always solved with an optimal action plan. On the other hand, **Depth First Graph Search** 
+never finds an optimal plan but is consistently faster and least-memory consumption, and thus can be a good solution to 
+find quickly a solution, which can be useful in some situations (such as validation of a result).
+
+Which one is best? If finding the optimal path is mandatory, **Breadth First Search** and 
+**Uniform Cost Search** are good options: the three are very close in execution time and the first one is 20-30% better 
+in node expansions. If not mandatory, it's good to highlight that **Greedy Best First** algorithm, although not finding 
+the optimal plan in Problems 2 and 3, is not that far from the optimal solution as **Depth First Graph Search**, but 
+runs in a better execution time and memory consumption than the 3 strategies for the optimal plan and can be used for 
+some situations where a bigger problem, with more variables, tends to expand memory consumption.
+
+## Analysis of Heuristics Search
+
+Running with heuristic search is expected to find solutions more efficiently than previous strategies.  
+about the states. The algorithms used were:
+- `8. astar_search h_1`
+- `9. astar_search h_ignore_preconditions`
+- `10. astar_search h_pg_levelsum`
+
+To compare the results between these algorithms, we used the outputs created by `run_search.py` execution, which 
+reports execution time (in seconds), memory usage (in terms of nodes) and the path length:
+
+#### Problem 1
+
+|    Search Algorithm                     | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                             |     :-:     |        :-:         |       :-:       |
+|(8) A* Search H1 Heuristic               |    **6**    |      0.04497s      |       55        |
+|(9) A* Search "Ignore Precond" Heuristic |    **6**    |    **0.04449s**    |       41        |
+|(10) A* Search "Level Sum" Heuristic     |    **6**    |      1.52476s      |     **11**      |
+
+#### Problem 2
+
+|    Search Algorithm                     | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                             |     :-:     |        :-:         |       :-:       |
+|(8) A* Search H1 Heuristic               |    **9**    |     14.92789s      |      4852       |
+|(9) A* Search "Ignore Precond" Heuristic |    **9**    |    **7.47146s**    |      1450       |
+|(10) A* Search "Level Sum" Heuristic     |    **9**    |    263.27003s      |     **86**      |
+
+#### Problem 3
+
+|    Search Algorithm                     | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                             |     :-:     |        :-:         |       :-:       |
+|(8) A* Search H1 Heuristic               |   **12**    |     76.36712s      |     18235       |
+|(9) A* Search "Ignore Precond" Heuristic |   **12**    |   **26.46407s**    |      5040       |
+|(10) A* Search "Level Sum" Heuristic     |   **12**    |   1364.74363s      |    **318**      |
+
+### Analysis of Heuristic Search Algorithms
+
+First of all, all heuristics found the optimal plan in all analysis (since all of them use an *h* (estimate to goal) 
+function that doesn't overestimate the distance), and in general they were faster than most of uninformed strategies.
+
+The __A\* Search h Ignoring Preconditions__ uses the concept that every action becomes applicable in every state, and 
+any single goal fluent can be achieved in one step (if there is an applicable action€”if not, the problem is 
+impossible) [reference: AIMA - 10.2.3 - Heuristics for Planning]. That's why the number os expansions is less than h1.
+
+Finally, The __A\* Search with Level Sum__ uses the planning graph built and the sum of the level costs of the goals; 
+this can be inadmissible but works well in practice for problems that are largely decomposable, as in this case 
+[reference: AIMA - 10.3.1 - Planning Graphs for Heuristic Estimation]. This is why it is much more accurate than the 
+other heuristics in terms of node expansions, but it suffers from execution time problems - the last execution didn't 
+attend the pre-requirements for a solution.
+
+In general, __A\* Search h Ignoring Preconditions__ was the best heuristics: although consuming more memory than the 
+"Level Sum" heuristics, this heuristic found all optimal plans in a very efficient time and with an average node 
+expansions number. On the other hand, the most efficient in memory consuming was **A\* with Level Sum**, occupying in 
+the last example (Problem 3) 1 to 6% of memory from the other two heuristics. The inconvenient for this strategy is the 
+very inefficient execution time (the last problem took near 23 minutes to finish), which can be prohibitive in certain
+scenarios.
+
+### Conclusions: Non-Heuristic vs. Heuristic Search Algorithms
+
+Analysing the numbers above, and comparing only solutions the found the optimal plan, the heuristic __A\* Search Ignoring Preconditions__ was 
+the winning strategy. Comparing with the most efficient in uninformed search (**Breadth First Search** and **Uniform Cost Search**), we can see 
+better numbers in all 3 cases:
+
+|    PROBLEM 1                            | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                             |     :-:     |        :-:         |       :-:       |
+|(1) Breadth First Search                 |    **6**    |      0.03436s      |       43        |
+|(5) Uniform Cost Search                  |    **6**    |      0.04061s      |       55        |
+|(9) A* Search "Ignore Precond" Heuristic |    **6**    |    **0.04449s**    |     **41**      |
 
 
-## Conclusion
+|    PROBLEM 2                            | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                             |     :-:     |        :-:         |       :-:       |
+|(1) Breadth First Search                 |    **9**    |     19.71453s      |      3343       |
+|(5) Uniform Cost Search                  |    **9**    |     18.37634s      |      4852       |
+|(9) A* Search "Ignore Precond" Heuristic |    **9**    |    **7.47146s**    |    **1450**     |
 
-The heuristics presented here were put to proof against an adversary and the results were, in majority, consistent in 
-winning.
-A deeper analysis shows that, despite some randomness of results, having a more aggressive approach in some way delivers
-better results. Furthermore, the number of executions is still not enough to show conclusive results.
+|    PROBLEM 3                            | Path Length | Execution Time (s) | Node Expansions |
+|         :-:                             |     :-:     |        :-:         |       :-:       |
+|(1) Breadth First Search                 |   **12**    |    157.00695s      |     14663       |
+|(5) Uniform Cost Search                  |   **12**    |     83.44421s      |     18235       |
+|(9) A* Search "Ignore Precond" Heuristic |   **12**    |   **26.46407s**    |    **5040**     |
 
-The challenge (and further work) is to define new approaches for improving the results consistently, and also improving 
-the number of matches to have better numbers to analyse.
+In all cases, the heuristic had the best performance in terms of speed and memory usage, enforcing the power of A* with 
+a good _h_ estimation function/heuristic.
